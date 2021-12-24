@@ -1,4 +1,4 @@
-package logging
+package zlogging
 
 import (
 	"fmt"
@@ -11,6 +11,8 @@ import (
 
 const (
 	DefaultTimeFormat = "06/01/02T15:04:05.000 MST"
+	defaultFormat = "%{color}%{time:2006-01-02 15:04:05.000 MST} %{id:04x} %{level:.4s}%{color:reset} [%{module}] %{color:bold}%{shortfunc}%{color:reset} -> %{message}"
+	defaultLevel  = zapcore.InfoLevel
 )
 
 func NewLogger(level, field string) *zap.SugaredLogger {
@@ -21,7 +23,6 @@ func NewLogger(level, field string) *zap.SugaredLogger {
 		panic(err)
 	}
 	return logger.Named(field).Sugar()
-
 }
 
 func TimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
@@ -33,23 +34,27 @@ func NewDefaultConfig() zap.Config {
 		Level:       zap.NewAtomicLevelAt(zapcore.InfoLevel),
 		Development: false,
 		Encoding:    "console",
-		EncoderConfig: zapcore.EncoderConfig{
-			// Keys can be anything except the empty string.
-			TimeKey:        "T",
-			LevelKey:       "L",
-			NameKey:        "N",
-			CallerKey:      "C",
-			MessageKey:     "M",
-			StacktraceKey:  "S",
-			LineEnding:     zapcore.DefaultLineEnding,
-			EncodeLevel:    zapcore.CapitalColorLevelEncoder,
-			EncodeTime:     TimeEncoder,
-			EncodeDuration: zapcore.StringDurationEncoder,
-			EncodeCaller:   zapcore.ShortCallerEncoder,
-		},
+		EncoderConfig: DefaultEncoderConfig(),
 		//InitialFields:    map[string]interface{}{"serviceName": "wisdom_park"}, // 初始化字段，如：添加一个服务器名称
 		OutputPaths: []string{"stdout"},
 		//ErrorOutputPaths: []string{"stderr"},
+	}
+}
+
+func DefaultEncoderConfig() zapcore.EncoderConfig{
+	return zapcore.EncoderConfig{
+		// Keys can be anything except the empty string.
+		TimeKey:        "T",
+		LevelKey:       "L",
+		NameKey:        "N",
+		CallerKey:      "C",
+		MessageKey:     "M",
+		StacktraceKey:  "S",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+		EncodeTime:     TimeEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
 }
 

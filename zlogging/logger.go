@@ -49,7 +49,7 @@ func DefaultEncoderConfig() zapcore.EncoderConfig{
 		NameKey:        "N",
 		CallerKey:      "C",
 		MessageKey:     "M",
-		StacktraceKey:  "S",
+		//StacktraceKey:  "S", //func trace
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
 		EncodeTime:     TimeEncoder,

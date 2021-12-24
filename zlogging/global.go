@@ -13,8 +13,16 @@ func init() {
 	Global = logging
 }
 
+// Init initializes logging with the provided config.
+func Init(config Config) {
+	err := Global.Apply(config)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func LoggerLevel() string {
-	return Global.defaultLevel.String()
+	return Global.level.String()
 }
 
 // MustGetLogger creates a logger with the specified name. If an invalid name
@@ -24,6 +32,6 @@ func MustGetLogger(loggerName string) *zap.SugaredLogger {
 }
 
 func SetLogLevel(level string) {
-	Global.defaultLevel = NameToLevel(level)
+	Global.level = NameToLevel(level)
 	return
 }

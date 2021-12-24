@@ -31,17 +31,26 @@ type Config struct {
 	//
 	// If a Writer is not provided, os.Stderr will be used as the log sink.
 	Writer io.Writer
+
+	Encoding int8
+
 }
-//
 
+type Encoding int8
 
+const (
+	CONSOLE Encoding = iota
+	JSON
+	LOGFMT
+)
 
 type Logging struct {
+	level zapcore.Level
 	loggers map[string]*zap.Logger
-	*LoggerLevels
 	encoderConfig  zapcore.EncoderConfig
 	writer         zapcore.WriteSyncer
 	mutex          sync.RWMutex
+	encoding       Encoding
 }
 
 //	if format == "json" {
@@ -93,12 +102,14 @@ func (l *Logging) Apply(c Config) error {
 	//	return err
 	//}
 
-	if c.LogSpec == "" {
-		c.LogSpec = os.Getenv("LOGGING_SPEC")
-	}
-	if c.LogSpec == "" {
-		c.LogSpec = defaultLevel.String()
-	}
+	//if c.LogSpec == "" {
+	//	c.LogSpec = os.Getenv("LOGGING_SPEC")
+	//}
+	//if c.LogSpec == "" {
+	//	c.LogSpec = defaultLevel.String()
+	//}
+
+	//l.defaultLevel = NameToLevel(c.Level)
 
 	//err = l.LoggerLevels.ActivateSpec(c.LogSpec)
 	//if err != nil {
@@ -121,7 +132,17 @@ func (l *Logging) Logger(name string) *zap.SugaredLogger {
 	defer l.mutex.RUnlock()
 	//conf := zap.NewDevelopmentEncoderConfig()
 	//zLogger,_ := zap.NewDevelopment()
-	core := zapcore.NewCore(zapcore.NewConsoleEncoder(l.encoderConfig), l.writer,l.LoggerLevels)
+	var encoder  zapcore.Encoder
+	switch l.encoding {
+	case JSON:
+		encoder = zapcore.NewJSONEncoder(l.encoderConfig)
+	//case LOGFMT:
+	//	encoder = zaplogfmt.NewEncoder(l.encoderConfig)
+	default:  //case CONSOLE:
+		encoder = zapcore.NewConsoleEncoder(l.encoderConfig)
+	}
+	
+	core := zapcore.NewCore(encoder, l.writer, &l.level)
 	zLogger := zap.New(core, []zap.Option{
 			zap.AddCaller(),
 			zap.AddStacktrace(zapcore.ErrorLevel),
@@ -172,15 +193,16 @@ func (l *Logging) Logger(name string) *zap.SugaredLogger {
 // configuration.
 func New(c Config) (*Logging, error) {
 	encoderConfig := DefaultEncoderConfig()
-	encoderConfig.NameKey = "name"
-
+	//encoderConfig.NameKey = "name"
 	l := &Logging{
 		loggers: map[string]*zap.Logger{},
-		LoggerLevels: &LoggerLevels{
-			defaultLevel: defaultLevel,
-		},
+		//LoggerLevels: &LoggerLevels{
+		//	defaultLevel: defaultLevel,
+		//},
+		level: defaultLevel,
 		encoderConfig:  encoderConfig,
 		writer: os.Stdout,
+		encoding: CONSOLE,
 		//multiFormatter: fabenc.NewMultiFormatter(),
 	}
 	err := l.Apply(c)
